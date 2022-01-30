@@ -2,12 +2,33 @@ import React, { useState, useEffect } from "react";
 const { tableau } = window;
 
 function ExportPDF() {
-  const [url] = useState("https://public.tableau.com/views/RegionalSampleWorkbook/Obesity");
+  //https://public.tableau.com/views/RegionalSampleWorkbook/Obesity
+
+  const [url] = useState("https://public.tableau.com/views/RegionalSampleWorkbook/College");
   const [viz, setViz] = useState(null);
+  const [option, setOption] = useState("");
+  const [optionList] = useState([
+    {
+      value: "",
+      display: "All"
+    },
+    {
+      value: "2013",
+      display: "2013"
+    },
+    {
+      value: "2014",
+      display: "2014"
+    }
+  ]);
 
   const initViz = () => {
-    let containerDiv = document.getElementById("container");
-    setViz(new tableau.Viz(containerDiv, url));
+  //console.log(optionList);
+  let containerDiv = document.getElementById("container");
+  const options = {
+    "Academic Year": option
+  };
+    setViz(new tableau.Viz(containerDiv, url,options));
   };
 
   useEffect(initViz, []);
@@ -15,11 +36,37 @@ function ExportPDF() {
   const exportToPDF = () => {
     viz.showExportPDFDialog();
   };
-
+  const filterYear = year => {
+    const sheet = viz.getWorkbook().getActiveSheet();
+    if (year === "") {
+      sheet.clearFilterAsync("Academic Year");
+      setOption("");
+    } else {
+      sheet.applyFilterAsync("Academic Year", year, tableau.FilterUpdateType.REPLACE);
+      setOption(year);
+    }
+  };
   return (
     <div>
       <h1>Export PDF</h1>
       <button onClick={exportToPDF}>Export PDF</button>
+      <label>Select Academic Year</label>
+      <select
+        style={selectStyle}
+        name="filterList"
+        value={option}
+        onChange={e => {
+          filterYear(e.target.value);
+        }}
+      >
+        {optionList.map(value => {
+          return (
+            <option key={value.value} value={value.value}>
+              {value.display}
+            </option>
+          );
+        })}
+      </select>
       <div style={setVizStyle} id="container" />
     </div>
   );
@@ -32,4 +79,7 @@ const setVizStyle = {
   textAlign:"center"
 };
 
+const selectStyle = {
+  marginLeft: "10px"
+};
 export default ExportPDF;
